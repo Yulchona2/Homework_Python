@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 
 driver = webdriver.Chrome(
     service=ChromeService(ChromeDriverManager().install()))
-driver.get("http://uitestingplayground.com/classattr")
+driver.get("http://uitestingplayground.com/dynamicid")
 driver.find_element(By.CSS_SELECTOR, "button[class*='btn-primary']").click()
 
 driver.quit()
