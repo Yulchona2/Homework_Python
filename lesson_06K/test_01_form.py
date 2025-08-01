@@ -29,7 +29,7 @@ def test_fill_fields(driver):
     last_name.clear()
     last_name.send_keys("Петров")
     address = driver.find_element(By.CSS_SELECTOR, 'input[name="address"]')
-    address.clear
+    address.clear()
     address.send_keys("Ленина, 55-3")
     zip_code = driver.find_element(By.CSS_SELECTOR, 'input[name="zip-code"]')
     zip_code.send_keys("")
