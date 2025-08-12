@@ -3,7 +3,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 
-class Client_info:
+class ClientInfo:
 
     def __init__(self, driver, name, last_name, zip_code):
         self.driver = driver

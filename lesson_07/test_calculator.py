@@ -22,7 +22,4 @@ def test_sum_calculator(driver):
     calc.plus()
     calc.eight()
     calc.equal()
-    calc.screen_result()
-    to_be = "15"
-    as_is = calc.screen_result()
-    assert as_is == to_be
+    assert calc.screen_result() == "15"

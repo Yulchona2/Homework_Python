@@ -6,15 +6,19 @@ from webdriver_manager.chrome import ChromeDriverManager
 from pages_shop.authorization import Authorization
 from pages_shop.inventory import Inventory
 from pages_shop.cart import Cart
-from pages_shop.checkout_step_one import Client_info
+from pages_shop.checkout_step_one import ClientInfo
 from pages_shop.checkout_step_two import CheckoutOverview
+from selenium.webdriver.chrome.options import Options
 
 
 @pytest.fixture()
 def driver():
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    options = Options()
+    options.add_argument("--incognito")
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
     driver.maximize_window()
     driver.get("https://www.saucedemo.com/")
+    driver.implicitly_wait(50)
     yield driver
     driver.quit()
 
@@ -29,7 +33,7 @@ def test_order(driver):
     cart = Cart(driver)
     cart.checkout()
 
-    client_info = Client_info(driver, "Юлия", "Егорова", "141021")
+    client_info = ClientInfo(driver, "Юлия", "Егорова", "141021")
     client_info.add_client_info()
 
     checkout_overview = CheckoutOverview(driver)
