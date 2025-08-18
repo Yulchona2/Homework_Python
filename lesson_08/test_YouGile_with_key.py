@@ -14,14 +14,16 @@ def create_project():
         "title": "YouGile",
         "users": user_role
         }
-    resp = requests.post(base_url + "/projects", headers=headers_for_projects, json=body_create_project)
+    resp = requests.post(base_url + "/projects", headers=headers_for_projects,
+                         json=body_create_project)
     return resp
 
 
 def get_company_by_id(project_id=None):
     if project_id is None:  # Если ID не передан, создаем новый проект
         project_id = create_project().json()["id"]
-    result = requests.get(base_url + "/projects/" + project_id, headers=headers_for_projects)
+    result = requests.get(base_url + "/projects/" + project_id,
+                          headers=headers_for_projects)
     return result
 
 

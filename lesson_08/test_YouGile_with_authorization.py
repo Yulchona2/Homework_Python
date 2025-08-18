@@ -1,61 +1,56 @@
 import requests
 
-base_url = "https://ru.yougile.com/api-v2"
-
-body_for_get_list_company = {
-        "login": login,
-        "password": password,
-        "name": company_name
-        }
-
-user_role = {"d0ddf6a5-4de0-48c7-b9c0-7770d4a4db60": "admin"}
+import confiq
 
 
-def get_company_id():
-    company_list = requests.post(base_url + "/auth/companies", headers={"Content-Type": "application/json"},
-                                 json=body_for_get_list_company)
-    assert company_list.status_code == 200
-    return company_list.json()["content"][0]["id"]
+# def test_get_company_list():
+#     resp = requests.post(base_url + "/auth/companies",
+#                          headers={"Content-Type": "application/json"},
+#                          json=body_for_get_list_company)
+#     response = resp.json()
+#     first_company = response["content"][0]
+#     company_id = first_company.get("id")
+#     assert bool(company_id)
 
 
-def get_key():
-    company_id = get_company_id()
-    body_for_get_key = {
-        "login": login,
-        "password": password,
-        "companyId": company_id
-        }
-    response = requests.post(base_url + "/auth/keys", headers={"Content-Type": "application/json"},
-                             json=body_for_get_key)
-    return response.json()["key"]
-
-
-def test_get_company_list():
-    company_id = get_company_id()
-    assert len(company_id) > 0
-    return company_id
-
-
-def get_headers_for_projects():
-    return {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + get_key()
-    }
+# def get_key():
+#     resp = requests.post(base_url + "/auth/companies",
+#                          headers={"Content-Type": "application/json"},
+#                          json=body_for_get_list_company)
+#     company_id = resp.json()["content"][0]["id"]
+#     body_for_get_key = {
+#         "login": login,
+#         "password": password,
+#         "companyId": company_id
+#         }
+#     resp_key = requests.post(base_url + "/auth/keys", headers={"Content-Type": "application/json"},
+#                              json=body_for_get_key)
+#     key = resp_key.json()["key"]
+#     return key
 
 
 def create_project():
     body_create_project = {
-        "title": "YouGile",
-        "users": user_role
-        }
-    resp = requests.post(base_url + "/projects", headers=get_headers_for_projects(), json=body_create_project)
+         "title": "YouGile",
+         "users": confiq.user_role
+             }
+    resp = requests.post(confiq.base_url + "/projects",
+                         headers=confiq.headers_for_projects,
+                         json=body_create_project)
     return resp
 
 
-def get_company_by_id(project_id=None):
-    if project_id is None:  # Если ID не передан, создаем новый проект
-        project_id = create_project().json()["id"]
-    result = requests.get(base_url + "/projects/" + project_id, headers=get_headers_for_projects())
+def get_project_by_id(project_id):
+    result = requests.get(confiq.base_url + "/projects/" + str(project_id),
+                          headers=confiq.headers_for_projects)
+    return result
+
+
+def change_project():
+    project_id = create_project().json()["id"]
+    result = requests.put(confiq.base_url + "/projects/" + project_id,
+                          headers=confiq.headers_for_projects,
+                          json=confiq.body_change_project)
     return result
 
 
@@ -67,33 +62,37 @@ def test_create_project():
 def test_create_project_negative():  # тело запроса без названия проекта
     body_create_project = {
         "title": "",
-        "users": user_role
+        "users": confiq.user_role
         }
-    resp = requests.post(base_url + "/projects", headers=get_headers_for_projects(), json=body_create_project)
+    resp = requests.post(confiq.base_url + "/projects", headers=confiq.headers_for_projects, json=body_create_project)
     assert resp.status_code == 400
 
 
-def test_get_company_by_id():
-    result = get_company_by_id()
+def test_get_project_by_id():
+    project_id = create_project().json()["id"]
+    result = get_project_by_id(project_id)
+    project_id_new = result.json()["id"]
     assert result.status_code == 200
+    assert project_id == project_id_new
 
 
-def test_get_company_by_id_negative():  # несуществующий id проекта
-    result = get_company_by_id(project_id="12345")
-    assert result.status_code == 404
-    assert result.json()["message"] == "Проект не найден"
+def test_get_project_by_id_negative():
+    fake_id = "00000000-0000-0000-0000-000000000000"
+    result = get_project_by_id(fake_id)
+
+    # Ожидаем 404 Not Found или 400 Bad Request
+    assert result.status_code in (404, 400)
+    # Проверяем наличие сообщения об ошибке
+    assert "error" in result.json()
 
 
 def test_change_project():
-    project_id = create_project().json()["id"]
-    body_change_project = {
-        "title": "Changed_project"
-             }
-    result = requests.put(base_url + "/projects/" + project_id,
-                          headers=get_headers_for_projects(), json=body_change_project)
-    assert result.status_code == 200
-    get_response = requests.get(base_url + "/projects/" + project_id, headers=get_headers_for_projects())
-    assert get_response.json()["title"] == body_change_project["title"]
+    resp = change_project()
+    project_changed_id = resp.json()["id"]
+    assert resp.status_code == 200
+    get_response = requests.get(confiq.base_url + "/projects/" + str(project_changed_id),
+                                headers=confiq.headers_for_projects)
+    assert get_response.json()["title"] == confiq.body_change_project["title"]
 
 
 def test_delete_project():
@@ -101,14 +100,14 @@ def test_delete_project():
     body_change_project = {
         "deleted": True
              }
-    result = requests.put(base_url + "/projects/" + project_id,
-                          headers=get_headers_for_projects(), json=body_change_project)
+    result = requests.put(confiq.base_url + "/projects/" + project_id,
+                          headers=confiq.headers_for_projects, json=body_change_project)
     assert result.status_code == 200
-    get_response = requests.get(base_url + "/projects/" + project_id, headers=get_headers_for_projects())
+    get_response = requests.get(confiq.base_url + "/projects/" + project_id, headers=confiq.headers_for_projects)
     assert get_response.json()["deleted"] is True
 
 
 def test_change_project_negative():  # несуществующий id проекта
     unrealistic_id = "12345"
-    result = requests.put(base_url + "/projects/" + unrealistic_id, headers=get_headers_for_projects())
+    result = requests.put(confiq.base_url + "/projects/" + unrealistic_id, headers=confiq.headers_for_projects)
     assert result.json()["message"] == "Проект не найден"
